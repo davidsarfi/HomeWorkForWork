@@ -245,5 +245,20 @@ namespace Bettson.OnlineWallets.ApiTests
             Assert.NotNull(body);
             Assert.Equal(balanceBefore + 115m, body!.Amount);
         }
+
+        [Fact]
+        public async Task Withdraw_AfterFailedWithdrawal_BalanceIsUnchanged()
+        {
+            var balanceResponse = await _client.GetAsync("/onlinewallet/balance");
+            var balanceBefore = (await balanceResponse.Content.ReadFromJsonAsync<BalanceResponse>())!.Amount;
+
+            await _client.PostAsJsonAsync("/onlinewallet/withdraw",
+                new WithdrawalRequest { Amount = balanceBefore + 999_999m });
+
+            var afterResponse = await _client.GetAsync("/onlinewallet/balance");
+            var body = await afterResponse.Content.ReadFromJsonAsync<BalanceResponse>();
+            Assert.NotNull(body);
+            Assert.Equal(balanceBefore, body!.Amount);
+        }
     }
 }
