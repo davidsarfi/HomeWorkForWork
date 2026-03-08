@@ -5,11 +5,11 @@ using Xunit;
 
 namespace Bettson.OnlineWallets.ApiTests
 {
-    public class OnlineWalletBalanceTests : IClassFixture<WebApplicationFactory<Betsson.OnlineWallets.Web.Startup>>
+    public class OnlineWalletFreshWalletTests : IClassFixture<WebApplicationFactory<Betsson.OnlineWallets.Web.Startup>>
     {
         private readonly HttpClient _client;
 
-        public OnlineWalletBalanceTests(WebApplicationFactory<Betsson.OnlineWallets.Web.Startup> factory)
+        public OnlineWalletFreshWalletTests(WebApplicationFactory<Betsson.OnlineWallets.Web.Startup> factory)
         {
             _client = factory.CreateClient();
         }
@@ -25,6 +25,16 @@ namespace Bettson.OnlineWallets.ApiTests
             // ReSharper disable once PossibleNullReferenceException — guarded by Assert.NotNull above
             Assert.Equal(0m, body!.Amount);
         }
+    }
+
+    public class OnlineWalletBalanceTests : IClassFixture<WebApplicationFactory<Betsson.OnlineWallets.Web.Startup>>
+    {
+        private readonly HttpClient _client;
+
+        public OnlineWalletBalanceTests(WebApplicationFactory<Betsson.OnlineWallets.Web.Startup> factory)
+        {
+            _client = factory.CreateClient();
+        }
 
         [Fact]
         public async Task GetBalance_AfterDeposit_ReflectsDepositedAmount()
@@ -37,7 +47,6 @@ namespace Bettson.OnlineWallets.ApiTests
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<BalanceResponse>();
             Assert.NotNull(body);
-            // ReSharper disable once PossibleNullReferenceException — guarded by Assert.NotNull above
             Assert.True(body!.Amount >= 75m);
         }
 
@@ -50,6 +59,20 @@ namespace Bettson.OnlineWallets.ApiTests
             Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);
             var content = await response.Content.ReadAsStringAsync();
             Assert.Contains("amount", content, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task Deposit_ValidAmount_ReturnsOkWithNewBalance()
+        {
+            var balanceResponse = await _client.GetAsync("/onlinewallet/balance");
+            var balanceBefore = (await balanceResponse.Content.ReadFromJsonAsync<BalanceResponse>())!.Amount;
+
+            var response = await _client.PostAsJsonAsync("/onlinewallet/deposit", new DepositRequest { Amount = 50m });
+
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadFromJsonAsync<BalanceResponse>();
+            Assert.NotNull(body);
+            Assert.Equal(balanceBefore + 50m, body!.Amount);
         }
     }
 }
