@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using Betsson.OnlineWallets.Web.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -73,6 +74,56 @@ namespace Bettson.OnlineWallets.ApiTests
             var body = await response.Content.ReadFromJsonAsync<BalanceResponse>();
             Assert.NotNull(body);
             Assert.Equal(balanceBefore + 50m, body!.Amount);
+        }
+
+        [Fact]
+        public async Task Deposit_ZeroAmount_ReturnsOkButBalanceUnchanged()
+        {
+            var balanceResponse = await _client.GetAsync("/onlinewallet/balance");
+            var balanceBefore = (await balanceResponse.Content.ReadFromJsonAsync<BalanceResponse>())!.Amount;
+
+            var response = await _client.PostAsJsonAsync("/onlinewallet/deposit", new DepositRequest { Amount = 0m });
+
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadFromJsonAsync<BalanceResponse>();
+            Assert.NotNull(body);
+            Assert.Equal(balanceBefore, body!.Amount);
+        }
+
+        [Fact]
+        public async Task Deposit_NegativeAmount_ReturnsBadRequest()
+        {
+            var response = await _client.PostAsJsonAsync("/onlinewallet/deposit", new DepositRequest { Amount = -10m });
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Deposit_SmallDecimalAmount_HandlesPenniesCorrectly()
+        {
+            var balanceResponse = await _client.GetAsync("/onlinewallet/balance");
+            var balanceBefore = (await balanceResponse.Content.ReadFromJsonAsync<BalanceResponse>())!.Amount;
+
+            var response = await _client.PostAsJsonAsync("/onlinewallet/deposit", new DepositRequest { Amount = 0.01m });
+
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadFromJsonAsync<BalanceResponse>();
+            Assert.NotNull(body);
+            Assert.Equal(balanceBefore + 0.01m, body!.Amount);
+        }
+
+        [Fact]
+        public async Task Deposit_LargeAmount_HandlesItWithoutProblems()
+        {
+            var balanceResponse = await _client.GetAsync("/onlinewallet/balance");
+            var balanceBefore = (await balanceResponse.Content.ReadFromJsonAsync<BalanceResponse>())!.Amount;
+
+            var response = await _client.PostAsJsonAsync("/onlinewallet/deposit", new DepositRequest { Amount = 1_000_000m });
+
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadFromJsonAsync<BalanceResponse>();
+            Assert.NotNull(body);
+            Assert.Equal(balanceBefore + 1_000_000m, body!.Amount);
         }
     }
 }
