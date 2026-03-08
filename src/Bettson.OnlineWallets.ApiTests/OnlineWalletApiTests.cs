@@ -228,5 +228,22 @@ namespace Bettson.OnlineWallets.ApiTests
 
             Assert.False(response.IsSuccessStatusCode);
         }
+
+        [Fact]
+        public async Task DepositThenWithdraw_MultipleRoundTrips_BalanceStaysConsistent()
+        {
+            var balanceResponse = await _client.GetAsync("/onlinewallet/balance");
+            var balanceBefore = (await balanceResponse.Content.ReadFromJsonAsync<BalanceResponse>())!.Amount;
+
+            await _client.PostAsJsonAsync("/onlinewallet/deposit", new DepositRequest { Amount = 100m });
+            await _client.PostAsJsonAsync("/onlinewallet/withdraw", new WithdrawalRequest { Amount = 25m });
+            await _client.PostAsJsonAsync("/onlinewallet/deposit", new DepositRequest { Amount = 50m });
+            await _client.PostAsJsonAsync("/onlinewallet/withdraw", new WithdrawalRequest { Amount = 10m });
+
+            var finalResponse = await _client.GetAsync("/onlinewallet/balance");
+            var body = await finalResponse.Content.ReadFromJsonAsync<BalanceResponse>();
+            Assert.NotNull(body);
+            Assert.Equal(balanceBefore + 115m, body!.Amount);
+        }
     }
 }
