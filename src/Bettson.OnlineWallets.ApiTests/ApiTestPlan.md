@@ -43,7 +43,7 @@ pipeline, validators, controllers, service layer, and in-memory database are all
 | 6 | `Deposit_NegativeAmount_ReturnsBadRequest` | Deposit -$10 (invalid input) | HTTP 400 — validator rejects negative amounts |
 | 7 | `Deposit_SmallDecimalAmount_HandlesPenniesCorrectly` | Deposit $0.01 (smallest valid amount) | HTTP 200, balance increases by exactly $0.01 |
 | 8 | `Deposit_LargeAmount_HandlesItWithoutProblems` | Deposit $1,000,000 (large amount) | HTTP 200, balance increases by exactly $1,000,000 |
-| 9 | `Deposit_MissingBody_ReturnsBadRequest` | POST with null/missing body | HTTP 400 — model binding fails |
+| 9 | `Deposit_NullBody_ReturnsUnsupportedMediaType` | POST with null/missing body (no Content-Type) | HTTP 415 — server rejects request without content type |
 
 ---
 
@@ -57,7 +57,7 @@ pipeline, validators, controllers, service layer, and in-memory database are all
 | 13 | `Withdraw_NegativeAmount_ReturnsBadRequest` | Withdraw -$5 (invalid input) | HTTP 400 — validator rejects negative amounts |
 | 14 | `Withdraw_ZeroAmount_ReturnsOkButBalanceUnchanged` | Withdraw $0 (boundary value) | HTTP 200, balance unchanged |
 | 15 | `Withdraw_ExactlyAllTheMoney_ReturnsZeroBalance` | Deposit $100 then withdraw the full balance | HTTP 200, `amount = 0` |
-| 16 | `Withdraw_MissingBody_ReturnsBadRequest` | POST with null/missing body | HTTP 400 — model binding fails |
+| 16 | `Withdraw_NullBody_ReturnsUnsupportedMediaType` | POST with null/missing body (no Content-Type) | HTTP 415 — server rejects request without content type |
 
 ---
 
@@ -76,7 +76,8 @@ pipeline, validators, controllers, service layer, and in-memory database are all
 |------|--------------|
 | Happy path (deposit & withdraw) | 4, 7, 8, 10, 15 |
 | Boundary values ($0, $0.01, exact balance) | 5, 7, 14, 15 |
-| Negative / invalid input | 6, 9, 13, 16 |
+| Negative / invalid input | 6, 13 |
+| Missing body / content type | 9, 16 |
 | Overdraft / insufficient funds | 11, 12 |
 | Response format / content type | 3 |
 | State consistency / multi-step | 1, 2, 17, 18 |
@@ -85,10 +86,14 @@ pipeline, validators, controllers, service layer, and in-memory database are all
 
 ## Notes
 
-- The in-memory database is **shared** across all tests in the same test run. Test order may
-  affect cumulative balances, which is why several tests read the current balance first and
-  assert relative changes (e.g. `balance + 50`) rather than absolute values.
+- The in-memory database is **shared** across tests within the same class. Tests that need a
+  clean database (e.g. `GetBalance_BrandNewWallet_ReturnsZero`) are placed in a separate class
+  (`OnlineWalletFreshWalletTests`) to get their own `WebApplicationFactory` instance. Other tests
+  read the current balance first and assert relative changes (e.g. `balance + 50`).
 - Validation is enforced by FluentValidation configured in `Startup.cs`. Negative amounts are
   rejected at the API layer before reaching the service.
 - Insufficient funds errors are thrown by `OnlineWalletService` and mapped to HTTP 400 by the
   global exception handler in `Startup.cs`.
+- Sending a POST with null body (no `Content-Type` header) returns HTTP 415 Unsupported Media
+  Type, not 400 Bad Request. An empty JSON object `{}` defaults `Amount` to `0` and passes
+  validation, so it is not treated as an error.

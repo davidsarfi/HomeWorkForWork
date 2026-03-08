@@ -125,5 +125,13 @@ namespace Bettson.OnlineWallets.ApiTests
             Assert.NotNull(body);
             Assert.Equal(balanceBefore + 1_000_000m, body!.Amount);
         }
+
+        [Fact]
+        public async Task Deposit_NullBody_ReturnsUnsupportedMediaType()
+        {
+            var response = await _client.PostAsync("/onlinewallet/deposit", null);
+
+            Assert.Equal(HttpStatusCode.UnsupportedMediaType, response.StatusCode);
+        }
     }
 }
