@@ -40,5 +40,16 @@ namespace Bettson.OnlineWallets.ApiTests
             // ReSharper disable once PossibleNullReferenceException — guarded by Assert.NotNull above
             Assert.True(body!.Amount >= 75m);
         }
+
+        [Fact]
+        public async Task GetBalance_ResponseIsJson_WithAmountProperty()
+        {
+            var response = await _client.GetAsync("/onlinewallet/balance");
+
+            response.EnsureSuccessStatusCode();
+            Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);
+            var content = await response.Content.ReadAsStringAsync();
+            Assert.Contains("amount", content, StringComparison.OrdinalIgnoreCase);
+        }
     }
 }
