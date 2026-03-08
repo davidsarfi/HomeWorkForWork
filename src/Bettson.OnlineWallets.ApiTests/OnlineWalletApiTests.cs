@@ -162,6 +162,20 @@ namespace Bettson.OnlineWallets.ApiTests
         }
 
         [Fact]
+        public async Task Withdraw_MoreThanBalance_ResponseContainsInsufficientFundsMessage()
+        {
+            var balanceResponse = await _client.GetAsync("/onlinewallet/balance");
+            var currentBalance = (await balanceResponse.Content.ReadFromJsonAsync<BalanceResponse>())!.Amount;
+
+            var response = await _client.PostAsJsonAsync("/onlinewallet/withdraw",
+                new WithdrawalRequest { Amount = currentBalance + 999_999m });
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            var content = await response.Content.ReadAsStringAsync();
+            Assert.Contains("insufficient", content, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
         public async Task Withdraw_MaxDecimalValue_DoesNotOverflowOrCrash()
         {
             var response = await _client.PostAsJsonAsync("/onlinewallet/withdraw",
