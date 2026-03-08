@@ -237,5 +237,27 @@ namespace Betsson.OnlineWallets.UnitTests.Services
             Assert.Equal(0m, savedEntry.Amount);
             Assert.Equal(50m, savedEntry.BalanceBefore);
         }
+
+        [Fact]
+        public async Task Withdraw_WithSufficientFunds_SavesTransactionWithCorrectTimestamp()
+        {
+            OnlineWalletEntry? savedEntry = null;
+            _repositoryMock
+                .Setup(r => r.GetLastOnlineWalletEntryAsync())
+                .ReturnsAsync(new OnlineWalletEntry { BalanceBefore = 70m, Amount = 30m });
+            _repositoryMock
+                .Setup(r => r.InsertOnlineWalletEntryAsync(It.IsAny<OnlineWalletEntry>()))
+                .Callback<OnlineWalletEntry>(e => savedEntry = e)
+                .Returns(Task.CompletedTask);
+
+            var beforeCall = DateTimeOffset.UtcNow;
+            var balance = await _service.WithdrawFundsAsync(new Models.Withdrawal { Amount = 25m });
+            var afterCall = DateTimeOffset.UtcNow;
+
+            Assert.Equal(75m, balance.Amount);
+            Assert.NotNull(savedEntry);
+            Assert.InRange(savedEntry.EventTime, beforeCall, afterCall);
+            _repositoryMock.Verify(r => r.InsertOnlineWalletEntryAsync(It.IsAny<OnlineWalletEntry>()), Times.Once);
+        }
     }
 }
