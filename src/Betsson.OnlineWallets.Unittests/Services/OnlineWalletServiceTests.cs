@@ -204,5 +204,18 @@ namespace Betsson.OnlineWallets.UnitTests.Services
             Assert.Equal(0m, balance.Amount);
             _repositoryMock.Verify(r => r.InsertOnlineWalletEntryAsync(It.IsAny<OnlineWalletEntry>()), Times.Once);
         }
+
+        [Fact]
+        public async Task Withdraw_WalletIsEmptyNoHistory_ThrowsErrorEvenForSmallAmount()
+        {
+            _repositoryMock
+                .Setup(r => r.GetLastOnlineWalletEntryAsync())
+                .ReturnsAsync((OnlineWalletEntry?)null);
+
+            await Assert.ThrowsAsync<Exceptions.InsufficientBalanceException>(() =>
+                _service.WithdrawFundsAsync(new Models.Withdrawal { Amount = 1m }));
+
+            _repositoryMock.Verify(r => r.InsertOnlineWalletEntryAsync(It.IsAny<OnlineWalletEntry>()), Times.Never);
+        }
     }
 }
