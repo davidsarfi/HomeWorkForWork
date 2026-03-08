@@ -213,6 +213,14 @@ namespace Bettson.OnlineWallets.ApiTests
         }
 
         [Fact]
+        public async Task Withdraw_NullBody_ReturnsUnsupportedMediaType()
+        {
+            var response = await _client.PostAsync("/onlinewallet/withdraw", null);
+
+            Assert.Equal(HttpStatusCode.UnsupportedMediaType, response.StatusCode);
+        }
+
+        [Fact]
         public async Task Withdraw_MaxDecimalValue_DoesNotOverflowOrCrash()
         {
             var response = await _client.PostAsJsonAsync("/onlinewallet/withdraw",
