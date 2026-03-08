@@ -29,5 +29,18 @@ namespace Betsson.OnlineWallets.UnitTests.Services
             Assert.Equal(0m, balance.Amount);
             _repositoryMock.Verify(r => r.GetLastOnlineWalletEntryAsync(), Times.Once);
         }
+
+        [Fact]
+        public async Task GetBalance_WalletWithPreviousTransactions_ReturnsSumOfLastEntryFields()
+        {
+            _repositoryMock
+                .Setup(r => r.GetLastOnlineWalletEntryAsync())
+                .ReturnsAsync(new OnlineWalletEntry { BalanceBefore = 125.50m, Amount = -25.25m });
+
+            var balance = await _service.GetBalanceAsync();
+
+            Assert.Equal(100.25m, balance.Amount);
+            _repositoryMock.Verify(r => r.GetLastOnlineWalletEntryAsync(), Times.Once);
+        }
     }
 }
