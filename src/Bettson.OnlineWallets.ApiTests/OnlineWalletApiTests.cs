@@ -133,5 +133,20 @@ namespace Bettson.OnlineWallets.ApiTests
 
             Assert.Equal(HttpStatusCode.UnsupportedMediaType, response.StatusCode);
         }
+
+        [Fact]
+        public async Task Withdraw_EnoughMoney_ReturnsOkWithReducedBalance()
+        {
+            await _client.PostAsJsonAsync("/onlinewallet/deposit", new DepositRequest { Amount = 200m });
+            var balanceResponse = await _client.GetAsync("/onlinewallet/balance");
+            var balanceBefore = (await balanceResponse.Content.ReadFromJsonAsync<BalanceResponse>())!.Amount;
+
+            var response = await _client.PostAsJsonAsync("/onlinewallet/withdraw", new WithdrawalRequest { Amount = 30m });
+
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadFromJsonAsync<BalanceResponse>();
+            Assert.NotNull(body);
+            Assert.Equal(balanceBefore - 30m, body!.Amount);
+        }
     }
 }
