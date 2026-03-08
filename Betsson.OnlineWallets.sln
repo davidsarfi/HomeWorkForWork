@@ -11,9 +11,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Betsson.OnlineWallets", "sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Betsson.OnlineWallets.Data", "src\Betsson.OnlineWallets.Data\Betsson.OnlineWallets.Data.csproj", "{4D65DE1B-3A57-4E78-981D-2D1279995F6D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bettson.OnlineWallets.ApiTests", "src\Bettson.OnlineWallets.ApiTests\Bettson.OnlineWallets.ApiTests.csproj", "{979DBB61-018B-4BB1-9917-FDDBA98F1703}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Betsson.OnlineWallets.ApiTests", "src\Betsson.OnlineWallets.ApiTests\Betsson.OnlineWallets.ApiTests.csproj", "{979DBB61-018B-4BB1-9917-FDDBA98F1703}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bettson.OnlineWallets.Unittests", "src\Bettson.OnlineWallets.Unittests\Bettson.OnlineWallets.Unittests.csproj", "{A3F4E87D-8952-4AE5-A4A3-9EF47449CCF2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Betsson.OnlineWallets.Unittests", "src\Betsson.OnlineWallets.Unittests\Betsson.OnlineWallets.Unittests.csproj", "{A3F4E87D-8952-4AE5-A4A3-9EF47449CCF2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

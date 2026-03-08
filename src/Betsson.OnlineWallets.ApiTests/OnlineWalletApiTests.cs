@@ -4,7 +4,7 @@ using Betsson.OnlineWallets.Web.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
-namespace Bettson.OnlineWallets.ApiTests
+namespace Betsson.OnlineWallets.ApiTests
 {
     public class OnlineWalletFreshWalletTests : IClassFixture<WebApplicationFactory<Betsson.OnlineWallets.Web.Startup>>
     {
