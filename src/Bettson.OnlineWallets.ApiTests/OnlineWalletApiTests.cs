@@ -22,7 +22,23 @@ namespace Bettson.OnlineWallets.ApiTests
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<BalanceResponse>();
             Assert.NotNull(body);
+            // ReSharper disable once PossibleNullReferenceException — guarded by Assert.NotNull above
             Assert.Equal(0m, body!.Amount);
+        }
+
+        [Fact]
+        public async Task GetBalance_AfterDeposit_ReflectsDepositedAmount()
+        {
+            var deposit = new DepositRequest { Amount = 75m };
+            await _client.PostAsJsonAsync("/onlinewallet/deposit", deposit);
+
+            var response = await _client.GetAsync("/onlinewallet/balance");
+
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadFromJsonAsync<BalanceResponse>();
+            Assert.NotNull(body);
+            // ReSharper disable once PossibleNullReferenceException — guarded by Assert.NotNull above
+            Assert.True(body!.Amount >= 75m);
         }
     }
 }
