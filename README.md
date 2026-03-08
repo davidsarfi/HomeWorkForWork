@@ -1,5 +1,6 @@
 # HomeWorkForWork
-This is a qa homework to create automation tests for the service in the code
+This is a qa homework to create automation tests for the service in the code.
+Test plans are written for each test test types can be found in the corresponding test folder.
 
 ### Build Docker image
 
