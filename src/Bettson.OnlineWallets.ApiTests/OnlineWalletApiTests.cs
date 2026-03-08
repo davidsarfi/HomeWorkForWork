@@ -184,6 +184,20 @@ namespace Bettson.OnlineWallets.ApiTests
         }
 
         [Fact]
+        public async Task Withdraw_ZeroAmount_ReturnsOkButBalanceUnchanged()
+        {
+            var balanceResponse = await _client.GetAsync("/onlinewallet/balance");
+            var balanceBefore = (await balanceResponse.Content.ReadFromJsonAsync<BalanceResponse>())!.Amount;
+
+            var response = await _client.PostAsJsonAsync("/onlinewallet/withdraw", new WithdrawalRequest { Amount = 0m });
+
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadFromJsonAsync<BalanceResponse>();
+            Assert.NotNull(body);
+            Assert.Equal(balanceBefore, body!.Amount);
+        }
+
+        [Fact]
         public async Task Withdraw_MaxDecimalValue_DoesNotOverflowOrCrash()
         {
             var response = await _client.PostAsJsonAsync("/onlinewallet/withdraw",
