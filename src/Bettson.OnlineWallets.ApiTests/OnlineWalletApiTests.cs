@@ -176,6 +176,14 @@ namespace Bettson.OnlineWallets.ApiTests
         }
 
         [Fact]
+        public async Task Withdraw_NegativeAmount_ReturnsBadRequest()
+        {
+            var response = await _client.PostAsJsonAsync("/onlinewallet/withdraw", new WithdrawalRequest { Amount = -5m });
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
         public async Task Withdraw_MaxDecimalValue_DoesNotOverflowOrCrash()
         {
             var response = await _client.PostAsJsonAsync("/onlinewallet/withdraw",
