@@ -198,6 +198,21 @@ namespace Bettson.OnlineWallets.ApiTests
         }
 
         [Fact]
+        public async Task Withdraw_ExactlyAllTheMoney_ReturnsZeroBalance()
+        {
+            await _client.PostAsJsonAsync("/onlinewallet/deposit", new DepositRequest { Amount = 100m });
+            var balanceResponse = await _client.GetAsync("/onlinewallet/balance");
+            var currentBalance = (await balanceResponse.Content.ReadFromJsonAsync<BalanceResponse>())!.Amount;
+
+            var response = await _client.PostAsJsonAsync("/onlinewallet/withdraw", new WithdrawalRequest { Amount = currentBalance });
+
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadFromJsonAsync<BalanceResponse>();
+            Assert.NotNull(body);
+            Assert.Equal(0m, body!.Amount);
+        }
+
+        [Fact]
         public async Task Withdraw_MaxDecimalValue_DoesNotOverflowOrCrash()
         {
             var response = await _client.PostAsJsonAsync("/onlinewallet/withdraw",
