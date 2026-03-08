@@ -58,6 +58,7 @@ pipeline, validators, controllers, service layer, and in-memory database are all
 | 14 | `Withdraw_ZeroAmount_ReturnsOkButBalanceUnchanged` | Withdraw $0 (boundary value) | HTTP 200, balance unchanged |
 | 15 | `Withdraw_ExactlyAllTheMoney_ReturnsZeroBalance` | Deposit $100 then withdraw the full balance | HTTP 200, `amount = 0` |
 | 16 | `Withdraw_NullBody_ReturnsUnsupportedMediaType` | POST with null/missing body (no Content-Type) | HTTP 415 — server rejects request without content type |
+| 17 | `Withdraw_MaxDecimalValue_DoesNotOverflowOrCrash` | Withdraw `decimal.MaxValue` (overflow guard) | Non-success status code — server rejects or handles gracefully |
 
 ---
 
@@ -65,8 +66,8 @@ pipeline, validators, controllers, service layer, and in-memory database are all
 
 | # | Test Name | Description | Expected Result |
 |---|-----------|-------------|-----------------|
-| 17 | `DepositThenWithdraw_MultipleRoundTrips_BalanceStaysConsistent` | Deposit $100, withdraw $25, deposit $50, withdraw $10 | Final balance = start + $115 |
-| 18 | `Withdraw_AfterFailedWithdrawal_BalanceIsUnchanged` | Attempt an overdraft, then verify balance is unchanged | Balance after failed attempt equals balance before |
+| 18 | `DepositThenWithdraw_MultipleRoundTrips_BalanceStaysConsistent` | Deposit $100, withdraw $25, deposit $50, withdraw $10 | Final balance = start + $115 |
+| 19 | `Withdraw_AfterFailedWithdrawal_BalanceIsUnchanged` | Attempt an overdraft, then verify balance is unchanged | Balance after failed attempt equals balance before |
 
 ---
 
@@ -78,9 +79,9 @@ pipeline, validators, controllers, service layer, and in-memory database are all
 | Boundary values ($0, $0.01, exact balance) | 5, 7, 14, 15 |
 | Negative / invalid input | 6, 13 |
 | Missing body / content type | 9, 16 |
-| Overdraft / insufficient funds | 11, 12 |
+| Overdraft / insufficient funds | 11, 12, 17 |
 | Response format / content type | 3 |
-| State consistency / multi-step | 1, 2, 17, 18 |
+| State consistency / multi-step | 1, 2, 18, 19 |
 
 ---
 
