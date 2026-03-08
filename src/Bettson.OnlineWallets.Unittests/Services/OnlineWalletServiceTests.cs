@@ -85,5 +85,74 @@ namespace Betsson.OnlineWallets.UnitTests.Services
             Assert.Equal(25m, savedEntry.Amount);
             Assert.Equal(0m, savedEntry.BalanceBefore);
         }
+
+        [Fact]
+        public async Task Deposit_ZeroAmount_ProcessesNormallyAndBalanceStaysTheSame()
+        {
+            OnlineWalletEntry? savedEntry = null;
+            _repositoryMock
+                .Setup(r => r.GetLastOnlineWalletEntryAsync())
+                .ReturnsAsync(new OnlineWalletEntry { BalanceBefore = 30m, Amount = 20m });
+            _repositoryMock
+                .Setup(r => r.InsertOnlineWalletEntryAsync(It.IsAny<OnlineWalletEntry>()))
+                .Callback<OnlineWalletEntry>(e => savedEntry = e)
+                .Returns(Task.CompletedTask);
+
+            var balance = await _service.DepositFundsAsync(new Models.Deposit { Amount = 0m });
+
+            Assert.Equal(50m, balance.Amount);
+            Assert.NotNull(savedEntry);
+            Assert.Equal(0m, savedEntry.Amount);
+            Assert.Equal(50m, savedEntry.BalanceBefore);
+        }
+
+        [Fact]
+        public async Task Deposit_TinyPennyAmount_HandlesSmallDecimalsCorrectly()
+        {
+            OnlineWalletEntry? savedEntry = null;
+            _repositoryMock
+                .Setup(r => r.GetLastOnlineWalletEntryAsync())
+                .ReturnsAsync(new OnlineWalletEntry { BalanceBefore = 50.50m, Amount = 49.49m });
+            _repositoryMock
+                .Setup(r => r.InsertOnlineWalletEntryAsync(It.IsAny<OnlineWalletEntry>()))
+                .Callback<OnlineWalletEntry>(e => savedEntry = e)
+                .Returns(Task.CompletedTask);
+
+            var balance = await _service.DepositFundsAsync(new Models.Deposit { Amount = 0.01m });
+
+            Assert.Equal(100.00m, balance.Amount);
+            Assert.NotNull(savedEntry);
+            Assert.Equal(0.01m, savedEntry.Amount);
+            Assert.Equal(99.99m, savedEntry.BalanceBefore);
+        }
+
+        [Fact]
+        public async Task Deposit_MaxDecimalAmount_OnZeroBalance_ReturnsMaxValue()
+        {
+            _repositoryMock
+                .Setup(r => r.GetLastOnlineWalletEntryAsync())
+                .ReturnsAsync((OnlineWalletEntry?)null);
+            _repositoryMock
+                .Setup(r => r.InsertOnlineWalletEntryAsync(It.IsAny<OnlineWalletEntry>()))
+                .Returns(Task.CompletedTask);
+
+            var balance = await _service.DepositFundsAsync(new Models.Deposit { Amount = decimal.MaxValue });
+
+            Assert.Equal(decimal.MaxValue, balance.Amount);
+        }
+
+        [Fact]
+        public async Task Deposit_MaxDecimalAmount_OnNonZeroBalance_ThrowsOverflowException()
+        {
+            _repositoryMock
+                .Setup(r => r.GetLastOnlineWalletEntryAsync())
+                .ReturnsAsync(new OnlineWalletEntry { BalanceBefore = 1m, Amount = 0m });
+            _repositoryMock
+                .Setup(r => r.InsertOnlineWalletEntryAsync(It.IsAny<OnlineWalletEntry>()))
+                .Returns(Task.CompletedTask);
+
+            await Assert.ThrowsAsync<OverflowException>(() =>
+                _service.DepositFundsAsync(new Models.Deposit { Amount = decimal.MaxValue }));
+        }
     }
 }

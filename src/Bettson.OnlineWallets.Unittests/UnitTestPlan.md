@@ -43,6 +43,8 @@ exactly what gets written back — without touching a real database.
 | 4 | `Deposit_EmptyWalletFirstEverDeposit_StartsFromZeroBalance` | No history, deposit $25 | Returns $25; saved entry has `BalanceBefore = 0`, `Amount = 25` |
 | 5 | `Deposit_ZeroAmount_ProcessesNormallyAndBalanceStaysTheSame` | Existing balance of $50 (30+20), deposit $0 | Returns $50; entry still saved with `Amount = 0`, `BalanceBefore = 50` |
 | 6 | `Deposit_TinyPennyAmount_HandlesSmallDecimalsCorrectly` | Existing balance of $99.99 (50.50+49.49), deposit $0.01 | Returns exactly $100.00; saved entry has `Amount = 0.01`, `BalanceBefore = 99.99` |
+| 7 | `Deposit_MaxDecimalAmount_OnZeroBalance_ReturnsMaxValue` | No history, deposit `decimal.MaxValue` | Returns `decimal.MaxValue`; 0 + Max does not overflow |
+| 8 | `Deposit_MaxDecimalAmount_OnNonZeroBalance_ThrowsOverflowException` | Balance = $1 (1+0), deposit `decimal.MaxValue` | Throws `OverflowException`; `1 + decimal.MaxValue` overflows |
 
 ---
 
@@ -50,12 +52,12 @@ exactly what gets written back — without touching a real database.
 
 | # | Test Name | Arrange | Expected Result |
 |---|-----------|---------|-----------------|
-| 7 | `Withdraw_EnoughMoneyInWallet_SubtractsAndSavesNegativeAmount` | Balance $150 (120+30), withdraw $20 | Returns $130; saved entry has `Amount = -20`, `BalanceBefore = 150`; insert called once |
-| 8 | `Withdraw_MoreThanWalletHas_ThrowsErrorAndSavesNothing` | Balance $90 (60+30), withdraw $100 | Throws `InsufficientBalanceException`; insert never called |
-| 9 | `Withdraw_ExactlyAllTheMoney_AllowsItAndReturnsZeroBalance` | Balance exactly $40 (10+30), withdraw $40 | Returns $0; insert called once |
-| 10 | `Withdraw_WalletIsEmptyNoHistory_ThrowsErrorEvenForSmallAmount` | No history (balance = $0), withdraw $1 | Throws `InsufficientBalanceException`; insert never called |
-| 11 | `Withdraw_ZeroAmount_ProcessesNormallyAndBalanceStaysTheSame` | Balance $50 (30+20), withdraw $0 | Returns $50; entry saved with `Amount = 0`, `BalanceBefore = 50` |
-| 12 | `Withdraw_WithSufficientFunds_SavesTransactionWithCorrectTimestamp` | Balance $100 (70+30), withdraw $25 | Returns $75; saved entry timestamp falls within the test execution window |
+| 9 | `Withdraw_EnoughMoneyInWallet_SubtractsAndSavesNegativeAmount` | Balance $150 (120+30), withdraw $20 | Returns $130; saved entry has `Amount = -20`, `BalanceBefore = 150`; insert called once |
+| 10 | `Withdraw_MoreThanWalletHas_ThrowsErrorAndSavesNothing` | Balance $90 (60+30), withdraw $100 | Throws `InsufficientBalanceException`; insert never called |
+| 11 | `Withdraw_ExactlyAllTheMoney_AllowsItAndReturnsZeroBalance` | Balance exactly $40 (10+30), withdraw $40 | Returns $0; insert called once |
+| 12 | `Withdraw_WalletIsEmptyNoHistory_ThrowsErrorEvenForSmallAmount` | No history (balance = $0), withdraw $1 | Throws `InsufficientBalanceException`; insert never called |
+| 13 | `Withdraw_ZeroAmount_ProcessesNormallyAndBalanceStaysTheSame` | Balance $50 (30+20), withdraw $0 | Returns $50; entry saved with `Amount = 0`, `BalanceBefore = 50` |
+| 14 | `Withdraw_WithSufficientFunds_SavesTransactionWithCorrectTimestamp` | Balance $100 (70+30), withdraw $25 | Returns $75; saved entry timestamp falls within the test execution window |
 
 ---
 
@@ -69,13 +71,15 @@ exactly what gets written back — without touching a real database.
 | Deposit — first ever (zero starting balance) | 4 |
 | Deposit — boundary: $0 amount | 5 |
 | Deposit — boundary: penny precision | 6 |
-| Withdrawal — normal flow | 7 |
-| Withdrawal — exact balance (boundary) | 9 |
-| Withdrawal — boundary: $0 amount | 11 |
-| Withdrawal — overdraft (balance insufficient) | 8 |
-| Withdrawal — overdraft on empty wallet | 10 |
-| Timestamp correctness | 3, 12 |
-| Repository call verification (Times.Once / Times.Never) | 1, 2, 3, 7, 8, 9, 10, 12 |
+| Deposit — overflow guard (zero balance) | 7 |
+| Deposit — overflow guard (non-zero balance) | 8 |
+| Withdrawal — normal flow | 9 |
+| Withdrawal — exact balance (boundary) | 11 |
+| Withdrawal — boundary: $0 amount | 13 |
+| Withdrawal — overdraft (balance insufficient) | 10 |
+| Withdrawal — overdraft on empty wallet | 12 |
+| Timestamp correctness | 3, 14 |
+| Repository call verification (Times.Once / Times.Never) | 1, 2, 3, 9, 10, 11, 12, 14 |
 
 ---
 
